@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: authentication-server
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/oauth_db?allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC&createDatabaseIfNotExist=True
+    username: root
+    password: root
+  jpa:
+    hibernate:
+      ddl-auto: update
+      show-sql: true
+
+logging:
+  level:
+    org.springframework.security: DEBUG
