@@ -1,3 +1,5 @@
+server:
+  port: 9000
 spring:
   application:
     name: authentication-server
@@ -10,6 +12,11 @@ spring:
     hibernate:
       ddl-auto: update
       show-sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:9000  # Replace with your authentication server's URL
 
 logging:
   level:
