@@ -22,7 +22,7 @@ public class UserController {
     @Autowired
     private TokenService tokenService;
 
-    @PostMapping("/register")
+    @PostMapping("/register/roles")
     public User register(@RequestBody User user) {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         if (user.getRoles() == null || user.getRoles().isEmpty()) {

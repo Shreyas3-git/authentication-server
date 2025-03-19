@@ -17,10 +17,35 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+//        http
+//                .csrf(csrf -> csrf.disable())
+//                .authorizeHttpRequests(auth -> auth
+//                        .requestMatchers(
+//                                "/register/roles",
+//                                "/login",
+//                                "/oauth/token",
+//                                "/api/public/**",
+//                                "/.well-known/openid-configuration", // Allow OIDC discovery
+//                                "/oauth2/jwks" // Allow JWKS endpoint
+//                        ).permitAll()
+//                        .requestMatchers("/bookmyshow/profile").hasRole("USER")
+//                        .requestMatchers("/bookmyshow/admin").hasRole("ADMIN")
+//                        .anyRequest().authenticated()
+//                )
+//                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+//        return http.build();
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/register", "/login", "/oauth/token").permitAll()
+                        .requestMatchers(
+                                "/register/roles",
+                                "/login",
+                                "/oauth/token",
+                                "/api/public/**",
+                                // Add these lines to permit OIDC and JWKS endpoints
+                                "/.well-known/openid-configuration",
+                                "/oauth2/jwks"
+                        ).permitAll()
                         .requestMatchers("/bookmyshow/profile").hasRole("USER")
                         .requestMatchers("/bookmyshow/admin").hasRole("ADMIN")
                         .anyRequest().authenticated()
