@@ -5,6 +5,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -52,5 +54,20 @@ public class TokenService
         // Generate the JWT token
         String token = jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
         return Map.of("access_token", token);
+    }
+
+
+    public static void main(String[] args) {
+        // Create a BCrypt password encoder with strength 10 (default)
+        PasswordEncoder encoder = new BCryptPasswordEncoder(10);
+
+        // Encode a password
+        String rawPassword = "System@123";
+        String encodedPassword = encoder.encode(rawPassword);
+        System.out.println("Encoded password: " + encodedPassword);
+
+        // Verify a password
+        boolean matches = encoder.matches(rawPassword, encodedPassword);
+        System.out.println("Password matches: " + matches);
     }
 }
