@@ -65,12 +65,18 @@ public class AuthServerConfig {
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> jwtCustomizer() {
         return context -> {
+            // Check if principal and authorities are available
             if (context.getPrincipal() != null && context.getPrincipal().getAuthorities() != null) {
+                // Extract authorities, map to strings, and join with spaces
                 String roles = context.getPrincipal().getAuthorities().stream()
                         .map(grantedAuthority -> grantedAuthority.getAuthority())
                         .collect(Collectors.joining(" "));
-                context.getClaims().claim("roles", roles); // Add roles to JWT claims
+
+                // Add the "roles" claim to the JWT token
+                context.getClaims().claim("roles", roles);
             }
         };
     }
+
+
 }
