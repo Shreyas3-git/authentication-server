@@ -2,7 +2,7 @@ package com.bookmyshow.oauth.authentication_server.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.Customizer;
+import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -29,28 +28,35 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    @Order(0)
+    public SecurityFilterChain jwksFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatcher("/oauth2/jwks")
+                .authorizeHttpRequests(authorize -> authorize.anyRequest().permitAll())
+                .csrf(csrf -> csrf.disable());
+        return http.build();
+    }
+
+    @Bean
+    @Order(1)
+    public SecurityFilterChain defaultFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests((auth) -> auth
                         .requestMatchers(
-                            "/register/roles",
-                            "/login",
-                            "/oauth/token",
-                            "/api/public/**",
-                            "/.well-known/openid-configuration"
+                                "/register/roles",
+                                "/login",
+                                "/oauth/token",
+                                "/api/public/**",
+                                "/.well-known/openid-configuration"
                         ).permitAll()
-                .requestMatchers("/oauth2/jwks").permitAll()
-                .requestMatchers("/bookmyshow/profile").hasRole("USER")
-                .requestMatchers("/bookmyshow/admin").hasRole("ADMIN")
-                .anyRequest().authenticated())
-                .cors(cors -> cors.disable())
-//                .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()));
+                        .requestMatchers("/bookmyshow/profile").hasRole("USER")
+                        .requestMatchers("/bookmyshow/admin").hasRole("ADMIN")
+                        .anyRequest().authenticated())
                 .oauth2ResourceServer(oauth2 -> oauth2
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
-                );
-//        http.formLogin(Customizer.withDefaults());
-//        http.httpBasic(Customizer.withDefaults());
+                )
+                .cors(httpSecurityCorsConfigurer -> httpSecurityCorsConfigurer.configurationSource(corsConfigurationSource()));
         return http.build();
     }
 
@@ -58,14 +64,6 @@ public class SecurityConfig {
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withJwkSetUri("http://localhost:9000/oauth2/jwks").build();
     }
-//    @Bean
-//    public UserDetailsService userDetailsService() {
-//        UserDetails user = User.withUsername("user").password("{noop}12345").authorities("read").build();
-//        UserDetails admin = User.withUsername("admin")
-//                .password("{bcrypt}$2a$10$2SCDD1ggz98qlVhhPZgHY.mL4erOk/mMfBHU9hnV/6ieTFxsofMT.")
-//                .authorities("admin").build();
-//        return new InMemoryUserDetailsManager(user,admin);
-//    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -74,17 +72,12 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
-        JwtGrantedAuthoritiesConverter grantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
-        grantedAuthoritiesConverter.setAuthoritiesClaimName("roles");
-        grantedAuthoritiesConverter.setAuthorityPrefix("ROLE_");
-
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwt -> {
             List<String> roles = jwt.getClaimAsStringList("roles");
             if (roles == null) {
                 String rolesStr = jwt.getClaimAsString("roles");
                 roles = rolesStr != null ? Arrays.asList(rolesStr.split(" ")) : Collections.emptyList();
-                System.out.println("***********"+roles+"****************");
             }
             return roles.stream()
                     .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
@@ -93,11 +86,10 @@ public class SecurityConfig {
         return jwtAuthenticationConverter;
     }
 
-
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:8082")); // Adjust as needed
+        configuration.setAllowedOrigins(List.of("http://localhost:8082"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
